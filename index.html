@@ -10,22 +10,22 @@
 </head>
 <body class="bg-slate-50 min-h-screen antialiased">
 
-    <nav class="top-nav-horizontal">
+   <nav class="top-nav-horizontal">
         <div class="nav-container">
             <div class="logo-area">
                 <div class="icon-circle"><i class="fas fa-chart-pie"></i></div>
                 <span class="logo-text">Financeiro<b>PRO</b></span>
             </div>
+            
+    </nav>
             <div class="menu-horizontal">
                 <button onclick="showTab('financeiro')" class="h-nav-item active" id="nav-fin">Carteira</button>
                 <button onclick="showTab('mercado')" class="h-nav-item" id="nav-mer">Mercado</button>
                 <button onclick="showTab('investimentos')" class="h-nav-item" id="nav-inv">Patrimônio</button>
                 <button onclick="showTab('historico')" class="h-nav-item" id="nav-his">Histórico</button>
+                <button onclick="showTab('config')" class="config-circle"><i class="fas fa-cog"></i></button>
             </div>
-            <button onclick="showTab('config')" class="config-circle"><i class="fas fa-cog"></i></button>
-        </div>
-    </nav>
-
+          
     <main class="main-content">
         <header class="dashboard-compact">
             <div class="balance-card-horizontal">
