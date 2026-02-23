@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Financeiro UX Horizontal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen antialiased">
+
+    <nav class="top-nav-horizontal">
+        <div class="nav-container">
+            <div class="logo-area">
+                <div class="icon-circle"><i class="fas fa-chart-pie"></i></div>
+                <span class="logo-text">Financeiro<b>PRO</b></span>
+            </div>
+            <div class="menu-horizontal">
+                <button onclick="showTab('financeiro')" class="h-nav-item active" id="nav-fin">Carteira</button>
+                <button onclick="showTab('mercado')" class="h-nav-item" id="nav-mer">Mercado</button>
+                <button onclick="showTab('investimentos')" class="h-nav-item" id="nav-inv">Patrimônio</button>
+                <button onclick="showTab('historico')" class="h-nav-item" id="nav-his">Histórico</button>
+            </div>
+            <button onclick="showTab('config')" class="config-circle"><i class="fas fa-cog"></i></button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <header class="dashboard-compact">
+            <div class="balance-card-horizontal">
+                <div>
+                    <p class="label-mini">SALDO DISPONÍVEL</p>
+                    <h1 class="main-balance">R$ <span id="saldo-geral">0,00</span></h1>
+                </div>
+                <button onclick="abrirModalEntrada()" class="btn-add-quick">
+                    <i class="fas fa-plus"></i> Nova Entrada
+                </button>
+            </div>
+        </header>
+
+        <section id="financeiro" class="tab-content active">
+            <h2 class="section-title">Minhas Despesas</h2>
+            <div class="horizontal-form-grid">
+                <div class="form-card">
+                    <input id="divida-id" type="hidden">
+                    <div class="input-row">
+                        <div class="input-group full">
+                            <label class="field-label">Descrição da Conta</label>
+                            <input id="desc-divida" type="text" placeholder="Ex: Aluguel" class="app-input-clean">
+                        </div>
+                    </div>
+                    <div class="input-row flex-row">
+                        <div class="input-group">
+                            <label class="field-label">Valor (R$)</label>
+                            <input id="valor-divida" type="number" placeholder="0.00" class="app-input-clean">
+                        </div>
+                       <div class="input-group">
+    <label class="field-label">Dia do Pagamento</label>
+    <input id="data-divida" type="number" placeholder="Ex: 15" min="1" max="31" class="app-input-clean">
+</div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group full">
+                            <label class="field-label">Tipo de Lançamento</label>
+                            <select id="tipo-divida" class="app-input-clean" onchange="toggleParcelas(this.value)">
+                                <option value="À Vista">À Vista</option>
+                                <option value="Fixa">Fixa Mensal</option>
+                                <option value="Parcelada">Parcelada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="campo-parcelas" class="hidden-field">
+                        <div class="input-group full">
+                            <label class="field-label">Quantidade de Parcelas</label>
+                            <input id="num-parcelas" type="number" value="2" class="app-input-clean border-blue-200 bg-blue-50">
+                        </div>
+                    </div>
+                    <button id="btn-salvar-divida" onclick="handleDivida()" class="btn-action-blue">Confirmar Despesa</button>
+                </div>
+            </div>
+            <div id="lista-dividas" class="horizontal-list"></div>
+        </section>
+
+        <section id="mercado" class="tab-content">
+            <h2 class="section-title">Lista de Compras</h2>
+            <div class="form-card">
+                <div class="input-row">
+                    <div class="input-group full">
+                        <label class="field-label">Nome do Produto</label>
+                        <input id="item-nome" type="text" class="app-input-clean" placeholder="Item">
+                    </div>
+                </div>
+                <div class="input-row flex-row">
+                    <div class="input-group">
+                        <label class="field-label">Preço Unitário</label>
+                        <input id="item-valor" type="number" step="0.01" class="app-input-clean" placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label class="field-label">Qtd</label>
+                        <input id="item-qtd" type="number" value="1" class="app-input-clean">
+                    </div>
+                </div>
+                <button onclick="handleMercado()" class="btn-action-blue">Adicionar ao Carrinho</button>
+            </div>
+            <div id="area-carrinho" class="hidden mt-6">
+                <div class="summary-box">
+                    <ul id="lista-carrinho" class="item-scroll-list"></ul>
+                    <div class="footer-summary">
+                        <span>Total Carrinho</span>
+                        <span id="total-carrinho" class="text-blue-600 font-bold">R$ 0,00</span>
+                    </div>
+                    <button onclick="finalizarCompra()" class="btn-action-blue">Finalizar Compra</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="investimentos" class="tab-content">
+            <h2 class="section-title">Meus Aportes</h2>
+            <div class="form-card">
+                <div class="input-group full">
+                    <label class="field-label">Valor R$</label>
+                    <input id="valor-patrimonio" type="number" class="app-input-clean" placeholder="0.00">
+                </div>
+                <div class="input-group full mt-4">
+                    <label class="field-label">Destino do Dinheiro</label>
+                    <select id="tipo-patrimonio" class="app-input-clean">
+                        <option value="Investimento">Ações / FIIs / CDB</option>
+                        <option value="Reserva">Reserva de Emergência</option>
+                    </select>
+                </div>
+                <button onclick="handlePatrimonio()" class="btn-action-blue mt-4">Salvar Aplicação</button>
+            </div>
+            <div id="lista-patrimonio" class="horizontal-list mt-6"></div>
+        </section>
+
+        <section id="historico" class="tab-content">
+            <h2 class="section-title">Fechamento Mensal</h2>
+            <div id="lista-historico" class="flex flex-col gap-4"></div>
+        </section>
+
+      <section id="config" class="tab-content">
+    <h2 class="section-title">Sistema</h2>
+    <div class="form-card space-y-4">
+        
+        <button onclick="editarSaldoAtual()" class="btn-secondary-clean" style="border-color: #cbd5e1; color: #475569;">
+            <i class="fas fa-sync-alt mr-2"></i> Ajustar Saldo Atual
+        </button>
+
+        <button onclick="exportarJSON()" class="btn-secondary-clean">Gerar Backup (JSON)</button>
+        
+        <label class="btn-secondary-clean block text-center cursor-pointer">
+            Restaurar Dados
+            <input type="file" id="importFile" class="hidden" onchange="importarJSON()">
+        </label>
+
+        <button onclick="resetarTudo()" class="w-full text-red-500 font-medium pt-4 text-sm">Limpar Todo Histórico</button>
+    </div>
+</section>
+    </main>
+
+    <script src="script.js"></script>
+    <div id="custom-alert"></div>
+</body>
+</html>
