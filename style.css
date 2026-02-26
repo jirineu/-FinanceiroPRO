@@ -32,12 +32,13 @@
     width: 32px; height: 32px; 
     display: flex; align-items: center; justify-content: center; 
     border-radius: 10px;
-}
+}a
 .logo-text { font-size: 0.9rem; color: var(--text-main); }
 
 /* Menu em Lista Horizontal */
 .menu-horizontal {
     display: flex;
+    justify-content: center;
     gap: 15px;
     overflow-x: auto;
     padding: 5px;
