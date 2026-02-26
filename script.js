@@ -93,9 +93,9 @@ function handleDivida() {
     const agora = new Date();
     const ano = agora.getFullYear();
     const mes = agora.getMonth();
+    const baseId = Date.now();
 
     if (tipo === 'Parcelada') {
-        const baseId = Date.now();
         for (let i = 1; i <= numP; i++) {
             let dt = new Date(ano, mes + (i - 1), dia);
             db.dividas.push({
@@ -103,17 +103,35 @@ function handleDivida() {
                 desc: `${desc} (${i}/${numP})`,
                 valor: valorParcela,
                 data: dt.toISOString().split('T')[0],
-                tipo: 'Parcelada'
+                tipo: 'Parcelada',
+                paga: false
             });
         }
-    } else {
+    } 
+    // NOVO BLOCO: Tratamento para despesa Fixa
+    else if (tipo === 'Fixa') {
+        for (let i = 0; i < 12; i++) { // Registra para os próximos 12 meses
+            let dt = new Date(ano, mes + i, dia);
+            db.dividas.push({
+                id: baseId + i,
+                desc: desc,
+                valor: valorParcela,
+                data: dt.toISOString().split('T')[0],
+                tipo: 'Fixa',
+                paga: false
+            });
+        }
+    } 
+    // Caso contrário, é "À Vista" (Apenas o mês atual)
+    else {
         let dt = new Date(ano, mes, dia);
         db.dividas.push({ 
             id: Date.now(), 
             desc: desc, 
             valor: valorParcela, 
             data: dt.toISOString().split('T')[0], 
-            tipo: tipo 
+            tipo: tipo,
+            paga: false
         });
     }
     
@@ -207,10 +225,22 @@ function renderAll() {
         return dt.getMonth() === mesAt && dt.getFullYear() === anoAt;
     });
 
-    // Cálculos
+    // --- CÁLCULOS ATUALIZADOS ---
+    
+    // 1. Total de Entradas
     const totalE = entradasMes.reduce((acc, e) => acc + e.valor, 0);
-    const totalD = dividasMes.reduce((acc, d) => acc + d.valor, 0);
-    const saldo = totalE - totalD;
+    
+    // 2. Total de Dívidas (apenas as marcadas como PAGAS)
+    const totalD = dividasMes
+        .filter(d => d.paga === true) 
+        .reduce((acc, d) => acc + d.valor, 0);
+
+    // 3. Total de Patrimônio (Tudo o que foi investido/guardado)
+    // Somamos todo o array de patrimônio para subtrair do saldo disponível
+    const totalP = db.patrimonio.reduce((acc, p) => acc + p.valor, 0);
+        
+    // 4. Saldo Atual: Entradas - Dívidas Pagas - Patrimônio Investido
+    const saldo = totalE - totalD - totalP;
 
     // UI Saldo
     const saldoElem = document.getElementById('saldo-geral');
@@ -220,22 +250,21 @@ function renderAll() {
     const listaD = document.getElementById('lista-dividas');
     if (listaD) {
         listaD.innerHTML = dividasMes.sort((a,b) => new Date(a.data) - new Date(b.data)).map(d => `
-            <div class="list-item-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="list-item-card ${d.paga ? 'opacity-60' : ''}" style="display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${d.paga ? '#10b981' : '#f59e0b'}; margin-bottom: 8px; padding: 10px; background: white; border-radius: 8px;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <div class="dia-indicador">
-                        <small>DIA</small>
-                        <strong>${new Date(d.data + "T00:00:00").getDate()}</strong>
-                    </div>
+                    <button onclick="alternarPagamento(${d.id})" style="font-size: 1.4rem; color: ${d.paga ? '#10b981' : '#cbd5e1'}; background: none; border: none; cursor: pointer;">
+                        <i class="fas ${d.paga ? 'fa-check-circle' : 'fa-circle'}"></i>
+                    </button>
                     <div>
-                        <p style="font-weight:700; font-size:13px; margin:0;">${d.desc}</p>
+                        <p style="font-weight:700; font-size:13px; margin:0; ${d.paga ? 'text-decoration: line-through; color: #94a3b8;' : ''}">${d.desc}</p>
                         <p style="font-size:10px; color:#94a3b8; text-transform:uppercase; margin:0;">${d.tipo}</p>
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span style="font-weight:800; font-size:14px; ${d.tipo === 'Investimento' ? 'color:#10b981' : ''}">R$ ${d.valor.toFixed(2)}</span>
-                   <button onclick="removerItem('dividas', ${d.id})" style="color: #ef4444; border: none; background: none; cursor: pointer; padding: 5px;">
-    <i class="fas fa-times-circle"></i>
-</button>
+                    <span style="font-weight:800; font-size:14px; color: ${d.paga ? '#64748b' : '#1e293b'}">R$ ${d.valor.toFixed(2)}</span>
+                    <button onclick="removerItem('dividas', ${d.id})" style="color: #ef4444; border: none; background: none; cursor: pointer; padding: 5px; opacity: 0.5;">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
             </div>
         `).join('');
@@ -261,7 +290,12 @@ function renderAll() {
         listaP.innerHTML = db.patrimonio.map(p => `
             <div class="list-item-card" style="display:flex; justify-content:space-between; padding:10px;">
                 <span style="font-size:12px; font-weight:700;">${p.tipo}</span>
-                <span style="font-size:12px; font-weight:800; color:#10b981;">R$ ${p.valor.toFixed(2)}</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:12px; font-weight:800; color:#10b981;">R$ ${p.valor.toFixed(2)}</span>
+                    <button onclick="removerItem('patrimonio', ${p.id})" style="color: #ef4444; font-size: 10px; opacity: 0.5;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
         `).join('');
     }
@@ -323,10 +357,9 @@ function editarSaldoAtual() {
         return dt.getMonth() === mesAt && dt.getFullYear() === anoAt;
     }).reduce((acc, e) => acc + e.valor, 0);
 
-    const totalD = db.dividas.filter(d => {
-        const dt = new Date(d.data + "T00:00:00");
-        return dt.getMonth() === mesAt && dt.getFullYear() === anoAt;
-    }).reduce((acc, d) => acc + d.valor, 0);
+  const totalD = dividasMes
+    .filter(d => d.paga === true) // Só subtrai se estiver paga
+    .reduce((acc, d) => acc + d.valor, 0);
 
     const saldoSistema = totalE - totalD;
 
@@ -351,5 +384,12 @@ function editarSaldoAtual() {
         
         alert("Saldo ajustado com sucesso!");
         salvar(); // Chama a função que salva no LocalStorage e atualiza a tela
+    }
+}
+function alternarPagamento(id) {
+    const divida = db.dividas.find(d => d.id === id);
+    if (divida) {
+        divida.paga = !divida.paga; // Inverte o estado (de pendente para pago e vice-versa)
+        salvar(); // Salva e atualiza a tela automaticamente
     }
 }
